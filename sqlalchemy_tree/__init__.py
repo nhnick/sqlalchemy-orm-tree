@@ -18,7 +18,8 @@ from operator import attrgetter
 from .exceptions import InvalidMoveError
 from .manager import TreeClassManager, TreeInstanceManager, TreeManager
 from .options import TreeOptions
-from .orm import TreeMapperExtension, TreeSessionExtension
+from .orm import TreeMapperExtension, TreeSessionExtension, \
+    DeclarativeMeta
 from .types import TreeDepthType, TreeEndpointType, TreeIdType, \
     TreeIntegerType, TreeLeftType, TreeRightType
 
