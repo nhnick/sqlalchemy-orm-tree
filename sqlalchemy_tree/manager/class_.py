@@ -430,6 +430,8 @@ class TreeClassManager(object):
         include_self = kwargs.pop('include_self', False)
         # Logical-AND vs. -OR for reduction
         disjoint = kwargs.pop('disjoint',     True)
+        # Limit depth
+        max_depth = kwargs.pop('max_depth', None)
         for extra in kwargs:
             raise TypeError(u"unexpected keyword argument '%s'" % extra)
 
@@ -437,6 +439,7 @@ class TreeClassManager(object):
             tree_id = getattr(node, self.tree_id_field.name)
             left = getattr(node, self.left_field.name)
             right = getattr(node, self.right_field.name) - 1
+            depth = getattr(node, self.depth_field.name)
 
             # If the caller requests the specified node to be included, this is most
             # easily accomplished by not incrementing left by one, so that the node
@@ -449,6 +452,9 @@ class TreeClassManager(object):
             # Any node which has a left value between this node's left and right
             # values must be a descendant of this node:
             filter_ &= sqlalchemy.between(self.left_field, left, right)
+
+            if max_depth:
+                filter_ &= (self.depth_field <= depth+max_depth)
 
             # We're done!
             return filter_

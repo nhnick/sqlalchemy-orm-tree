@@ -208,7 +208,7 @@ class TreeInstanceManager(TreeClassManager):
         return self.filter_descendants_of_node(
             self._get_obj(), include_self=include_self)
 
-    def query_descendants(self, session=None, include_self=False):
+    def query_descendants(self, session=None, include_self=False, **kwargs):
         """Get a query for node's descendants.
 
         Requires that node is in “persistent” state or in “pending” state in
@@ -225,7 +225,7 @@ class TreeInstanceManager(TreeClassManager):
           a `sqlalchemy.orm.Query` object which contains only node's descendants.
         """
         return self.query_descendants_of_node(
-            self._get_obj(), session=session, include_self=include_self)
+            self._get_obj(), session=session, include_self=include_self, **kwargs)
 
     def get_descendant_count(self):
         "Returns the number of descendants this node has."
