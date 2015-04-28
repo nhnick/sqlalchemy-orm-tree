@@ -15,7 +15,7 @@
 
 __title__ = 'SQLAlchemy-ORM-tree'
 __package_name__ = 'sqlalchemy_tree'
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __description__ = 'An implementation for SQLAlchemy-based applications of the nested-sets/modified-pre-order-tree-traversal technique for storing hierarchical data in a relational database.'
 __author__ = 'RokuSigma Inc. and contributors'
 __email__ = 'sqlalchemy-orm-tree@monetize.io'
