@@ -23,8 +23,6 @@ from .orm import TreeMapperExtension, TreeSessionExtension, \
 from .types import TreeDepthType, TreeEndpointType, TreeIdType, \
     TreeIntegerType, TreeLeftType, TreeRightType
 
-from . import tests
-
 
 _nonexistent = object()
 def _iter_current_next(sequence):
