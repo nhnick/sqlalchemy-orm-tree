@@ -61,8 +61,9 @@ def _recursive_iterator(sequence, is_child_func):
 
     :param is_child_func:
         a callable object which accepts two positional arguments and
-        returns `True` value if first argument value is parent of second
-        argument value.
+        returns the number of levels between the first argument value and
+        the second second argument value, or 0 if the second argument is
+        not a child of the first.
 
     >>> is_child_func = lambda parent, child: child > parent
     >>> def listify(seq):
@@ -82,8 +83,13 @@ def _recursive_iterator(sequence, is_child_func):
             item['next'] is not _nonexistent \
             and is_child_func(node, item['next'])
 
+    def consume_below_level(node, level):
+        while item['next'] is not _nonexistent and is_child_func(node, item['next']) > level:
+            item['current'], item['next'] = next(current_next_iterator)
+
     def step():
         item['current'], item['next'] = next(current_next_iterator)
+
         if is_parent_of_next(item['current']):
             return (item['current'], children_generator(item['current']))
         else:
@@ -92,11 +98,23 @@ def _recursive_iterator(sequence, is_child_func):
     def children_generator(parent_node):
         while True:
             yield step()
+
+            # If at this point the next item is further than 1 down the tree,
+            # we know that the user did not consume other child iterators that
+            # we gave him. Remove everything until we catch up to our level.
+            consume_below_level(parent_node, 1)
+
+            # Now that we are on our level, the next one is either a direct
+            # child again, or we are finished with the children of this node.
             if not is_parent_of_next(parent_node):
+                #q('%sbreaking out of child iter %s (%s) because of %s (%s)' % (parent_node.tree_depth*'    ', parent_node.linktext, parent_node.tree_depth, item['next'].linktext, item['next'].tree_depth))
                 break
 
     while True:
-        yield step()
+        node, children = step()
+        yield node, children
+
+        consume_below_level(node, 0)
 
 
 def tree_recursive_iterator(flat_tree, class_manager):
@@ -142,6 +160,7 @@ def tree_recursive_iterator(flat_tree, class_manager):
     tree_id = attrgetter(opts.tree_id_field.name)
     depth = attrgetter(opts.depth_field.name)
     def is_child(parent, child):
-        return tree_id(parent) == tree_id(child) \
-                and depth(child) == depth(parent) + 1
+        if  tree_id(parent) != tree_id(child) or depth(child) <= depth(parent):
+            return 0
+        return depth(child) - depth(parent)
     return _recursive_iterator(flat_tree, is_child)
