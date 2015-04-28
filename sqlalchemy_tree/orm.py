@@ -995,7 +995,9 @@ class TreeSessionExtension(sqlalchemy.orm.interfaces.SessionExtension):
 
             elif (node in session.new or
                   sqlalchemy.orm.attributes.get_history(
-                    node, options.parent_field_name).has_changes()):
+                    node, options.parent_field_name).has_changes() or
+                  sqlalchemy.orm.attributes.get_history(
+                    node, options.parent_id_field.name).has_changes()):
 
                 if (hasattr(options, 'order_with_respect_to') and
                         len(options.order_with_respect_to)):
@@ -1004,6 +1006,11 @@ class TreeSessionExtension(sqlalchemy.orm.interfaces.SessionExtension):
                 else:
                     position = options.class_manager.POSITION_LAST_CHILD
                     target = getattr(node, options.parent_field_name)
+                    target_id = getattr(node, options.parent_id_field.name)
+                    if not target or target.id != target_id:
+                        # If the parent relationship is not set, or changed,
+                        # try to get it from the parent id column.
+                        target = session.query(options.node_class).get(target_id)
 
                 setattr(
                     node, options.delayed_op_attr,
