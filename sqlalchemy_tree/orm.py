@@ -1023,7 +1023,10 @@ class TreeSessionExtension(sqlalchemy.orm.interfaces.SessionExtension):
                     if not target or target.id != target_id:
                         # If the parent relationship is not set, or changed,
                         # try to get it from the parent id column.
-                        target = session.query(options.node_class).get(target_id)
+                        if target_id is None:
+                            target = None
+                        else:
+                            target = session.query(options.node_class).get(target_id)
 
                 setattr(
                     node, options.delayed_op_attr,
