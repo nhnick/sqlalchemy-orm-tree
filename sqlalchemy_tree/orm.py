@@ -595,27 +595,30 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
         depth = getattr(node, options.depth_field.name)
         gap_size = right - left + 1
 
+        # Note: For MySQL, the order of the values int he SET clause matters.
+        # http://docs.sqlalchemy.org/en/latest/core/tutorial.html#updates-order-parameters
+        # http://dev.mysql.com/doc/refman/5.7/en/update.html
         connection.execute(
-            options.table.update()
-            .values({
-                options.parent_id_field: sqlalchemy.case(
+            options.table.update(preserve_parameter_order=True)
+            .values([
+                (options.parent_id_field, sqlalchemy.case(
                     [(options.pk_field == getattr(node, options.pk_field.name), parent_id)],
-                    else_=options.parent_id_field),
-                options.tree_id_field:   sqlalchemy.case(
+                    else_=options.parent_id_field)),
+                (options.tree_id_field,   sqlalchemy.case(
                     [((options.left_field >= left) & (options.left_field <= right), new_tree_id)],
-                    else_=options.tree_id_field),
-                options.left_field:      sqlalchemy.case(
+                    else_=options.tree_id_field)),
+                (options.depth_field,     sqlalchemy.case(
+                    [((options.left_field >= left) & (options.left_field <= right), options.depth_field + depth_change)],
+                    else_=options.depth_field)),
+                (options.left_field,      sqlalchemy.case(
                     [((options.left_field >= left) & (options.left_field <= right), options.left_field + left_right_change),
                      ((options.left_field > right),                                options.left_field - gap_size)],
-                    else_=options.left_field),
-                options.right_field:     sqlalchemy.case(
+                    else_=options.left_field)),
+                (options.right_field,     sqlalchemy.case(
                     [((options.right_field >= left) & (options.right_field <= right), options.right_field + left_right_change),
                      ((options.right_field > right),                                 options.right_field - gap_size)],
-                    else_=options.right_field),
-                options.depth_field:     sqlalchemy.case(
-                    [((options.left_field >= left) & (options.left_field <= right), options.depth_field + depth_change)],
-                    else_=options.depth_field),
-            })
+                    else_=options.right_field))
+            ])
             .where(options.tree_id_field == tree_id))
         for obj in session_objs:
             obj_tree_id = getattr(obj, options.tree_id_field.name)
@@ -658,6 +661,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
         depth = getattr(node, options.depth_field.name)
         left_right_change = 1 - left
         depth_change = -depth
+
 
         self._inter_tree_move_and_close_gap(connection, session_objs, node,
                                             new_tree_id, left_right_change,
