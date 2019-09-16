@@ -109,10 +109,15 @@ def _recursive_iterator(sequence, is_child_func):
                 break
 
     while True:
-        node, children = step()
-        yield node, children
+        try:
+            node, children = step()
+            yield node, children
 
-        consume_below_level(node, 0)
+            consume_below_level(node, 0)
+        except StopIteration:
+            # If any of the next() calls above raies StopIteration(), we are done,
+            # but we have to convert this to a None return. Python 3.7+ enforces this.
+            return
 
 
 def tree_recursive_iterator(flat_tree, class_manager):
