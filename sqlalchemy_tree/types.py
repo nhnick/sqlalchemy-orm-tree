@@ -28,6 +28,8 @@ class TreeIntegerType(sqlalchemy.types.TypeDecorator):
     "Abstract base class implementing an integer type."
     impl = sqlalchemy.Integer
 
+    cache_ok = True
+
 
 class TreeIdType(TreeIntegerType):
 

@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function, \
 
 import sqlalchemy
 from sqlalchemy.ext.declarative import DeclarativeMeta as BaseDeclarativeMeta
+from sqlalchemy.orm import MapperEvents, SessionEvents
 
 from .exceptions import InvalidMoveError
 
@@ -24,7 +25,7 @@ __all__ = (
 )
 
 
-class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
+class TreeMapperExtension(MapperEvents):
 
     """An extension to a node class' mapper, handling insertion, deletion, and
     updates of tree nodes. This class is instantiated by the manager object, and
@@ -109,6 +110,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
         specified.
         """
         options = self._tree_options
+        node = node.object
 
         params, session_objs = getattr(node, options.delayed_op_attr)
         target, position = params
@@ -196,11 +198,13 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
     def after_insert(self, mapper, connection, node):
         "Just after a previously non-existent node is inserted into the tree."
         options = self._tree_options
+        node = node.object
         delattr(node, options.delayed_op_attr)
 
     def before_delete(self, mapper, connection, node):
         "Just prior to an existent node being deleted."
         options = self._tree_options
+        node = node.object
 
         session_objs = getattr(node, options.delayed_op_attr)
 
@@ -223,6 +227,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
     def after_delete(self, mapper, connection, node):
         "Just after an existent node is updated."
         options = self._tree_options
+        node = node.object
 
         session_objs = getattr(node, options.delayed_op_attr)
         delattr(node, options.delayed_op_attr)
@@ -433,6 +438,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
         nodes.
         """
         options = self._tree_options
+        node = node.object
 
         if not hasattr(node, options.delayed_op_attr):
             return
@@ -467,6 +473,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
     def after_update(self, mapper, connection, node):
         "Just after an existent node is updated."
         options = self._tree_options
+        node = node.object
         if hasattr(node, options.delayed_op_attr):
             delattr(node, options.delayed_op_attr)
 
@@ -978,7 +985,7 @@ class TreeMapperExtension(sqlalchemy.orm.interfaces.MapperExtension):
             node, options.parent_id_field.name, parent_id)
 
 
-class TreeSessionExtension(sqlalchemy.orm.interfaces.SessionExtension):
+class TreeSessionExtension(SessionEvents):
 
     """An session extension handling insertion, deletion, and updates of tree
     nodes. This class is instantiated by the manager object, and the average
